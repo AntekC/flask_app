@@ -1,6 +1,35 @@
-from flask import Flask, escape, request
+from flask import Flask, escape, request, g, jsonify
+import sqlite3, json
+from flask_cors import CORS
+import json 
 
+DATABASE = "database.db"
 app = Flask(__name__)
+CORS(app)
+
+def make_dicts(cursor, row):
+    return dict((cursor.description[idx][0], value)
+                for idx, value in enumerate(row))
+
+def get_db():
+    db = getattr(g, '_database', None)
+    if db is None:
+        db = g._database = sqlite3.connect(DATABASE)
+    db.row_factory = make_dicts
+    return db
+
+def query_db(query, args=(), one=False):
+    cur = get_db().execute(query, args)
+    rv = cur.fetchall()
+    cur.close()
+    return (rv[0] if rv else None) if one else rv
+
+
+@app.teardown_appcontext
+def close_connection(exception):
+    db = getattr(g, '_database', None)
+    if db is not None:
+        db.close()
 
 @app.route('/')
 def index():
@@ -36,10 +65,16 @@ def student(student_id):
 @app.route('/students', methods=['GET', 'POST'])
 def post():
     if request.method == 'POST':
+        cur = get_db().cursor()
+        cur.execute("INSERT INTO students (student_firstname, student_lastname) VALUES ('koko','jambo')")
+        get_db().commit()
+        get_db().close()
         return 'Dodano studenta'
     else:
-        return 'Lista studentow'
-
+        #cur = get_db().execute(query, args)
+        #cur.execute('SELECT * FROM students')
+        return jsonify(query_db('select * from students'))
+        get_db().close()
 
 @app.route('/exams/<exam_id>/students/<student_id>', methods=['GET','PUT','DELETE'])
 def exam_id_student_id(student_id,exam_id):
@@ -74,3 +109,5 @@ def exam_post():
     else:
         return 'Lista egzaminow'
 
+if __name__ == '__main__':
+    app.run()

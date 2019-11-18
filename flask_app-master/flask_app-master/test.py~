@@ -1,6 +1,21 @@
-from flask import Flask, escape, request
+from flask import Flask, escape, request, g
+import sqlite3
+
+DATABASE = "database.db"
+
+def get_db():
+    db = getattr(g, '_database', None)
+    if db is None:
+        db = g._database = sqlite3.connect(DATABASE)
+    return db
 
 app = Flask(__name__)
+
+@app.teardown_appcontext
+def close_connection(exception):
+    db = getattr(g, '_database', None)
+    if db is not None:
+        db.close()
 
 @app.route('/')
 def index():
@@ -36,10 +51,16 @@ def student(student_id):
 @app.route('/students', methods=['GET', 'POST'])
 def post():
     if request.method == 'POST':
+        cur = get_db().cursor()
+        cur.execute("INSERT INTO students (student_firstname, student_lastname) VALUES ('koko','jambo')")
+        get_db().commit()
+        get_db().close()
         return 'Dodano studenta'
     else:
-        return 'Lista studentow'
-
+        cur = get_db().cursor()
+        cur.execute('SELECT * FROM students')
+        return str(cur.fetchone())
+        get_db().close()
 
 @app.route('/exams/<exam_id>/students/<student_id>', methods=['GET','PUT','DELETE'])
 def exam_id_student_id(student_id,exam_id):
