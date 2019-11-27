@@ -12,9 +12,6 @@
       <v-content>
 	  
         <v-container>
-          <div>Licznik  = {{ counter }}</div>
-            
-            <div><v-btn @click='inc()'>Zwiększ licznik</v-btn></div>
             <div><v-btn @click='getStudents()'>Get Students</v-btn></div>
             <div><v-btn @click='clearSudents()'>Clear Students</v-btn></div>
             <div>{{ info }}</div>
@@ -23,11 +20,11 @@
               <v-data-table
                 :headers='headers'
                 :items='students'
-                disable-pagination hide-deafult-footer>
+                disable-pagination 
+                hide-deafult-footer>
               </v-data-table>
             </div>
         </v-container>
-
 
         <v-container>
           <v-form>
@@ -41,10 +38,9 @@
               lable="Last Name"
               required>
             </v-text-field>
+            <div><v-btn @click='addStudent(FirstName,LastName)'>Add Students</v-btn></div>
           </v-form>
-
         </v-container>
-
       </v-content>
     </v-app>
   </div>
@@ -61,6 +57,8 @@
       data: {
           counter: 0,
           info: '',
+          message: '',
+          error_message: '',
           students:[],
           headers: [
             {text: 'imie', value:'FirstName'},
@@ -73,21 +71,28 @@
               this.counter++;
           },
           
-          getStudents: function() {
+          getStudents() {
               axios
                 .get('http://127.0.0.1:5000/students')
                 .then(
                   response => (this.students = response.data),
                   error => (this.info = error)
-                )
+                  )      
           },
 
-          clearSudents: function(){
-            this.students = null;
+          clearSudents(){
+            this.students = [];
+          },
+
+          addStudent(fname, lname){
+            axios
+            .post('http://127.0.0.1:5000/students'.concat('?firstname=',fname,'&lastname=',lname))
+            .then(
+              response => (this.message = response.data),
+              error => (this.error_message = error),
+              )
           }
       },
-
-
     })
   </script>
 </body>
