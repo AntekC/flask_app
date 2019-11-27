@@ -65,12 +65,11 @@ def student(student_id):
 @app.route('/students', methods=['GET', 'POST'])
 def post():
     if request.method == 'POST':
-        query_db("INSERT INTO students (student_firstname, student_lastname) VALUES ('koko','jambo')")
-        # cur = get_db().cursor()
-        # cur.execute("INSERT INTO students (student_firstname, student_lastname) VALUES ('koko','jambo')")
-        # get_db().commit()
-        # get_db().close()
-        return 'Dodano studenta'
+        cur = get_db().cursor()
+        cur.execute(f"INSERT INTO students (FirstName, LastName) VALUES ('{request.args['firstname']}','{request.args['lastname']}')")
+        get_db().commit()
+        get_db().close()
+        return f"Dodano studenta {request.args['firstname']} , {request.args['lastname']}"
     else:
         #cur = get_db().execute(query, args)
         #cur.execute('SELECT * FROM students')
